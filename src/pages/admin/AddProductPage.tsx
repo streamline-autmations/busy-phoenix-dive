@@ -64,6 +64,9 @@ export default function AddProductPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">BLOM Add Products</h1>
           <p className="text-gray-600">Create and preview your product before publishing</p>
+          <div className="mt-2 text-sm text-gray-500">
+            💡 Tip: After saving a draft, you can edit it at <code>/admin/products/your-slug/edit</code>
+          </div>
         </div>
         
         <div className="grid lg:grid-cols-2 gap-8">

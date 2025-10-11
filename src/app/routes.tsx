@@ -8,12 +8,19 @@ function HomePage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-4">BLOM Admin</h1>
         <p className="text-gray-600 mb-6">Product management system</p>
-        <a 
-          href="/admin/products/new" 
-          className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add New Product
-        </a>
+        <div className="space-y-3">
+          <div>
+            <a 
+              href="/admin/products/new" 
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Add New Product
+            </a>
+          </div>
+          <div className="text-sm text-gray-500">
+            Or edit existing: <code>/admin/products/your-slug/edit</code>
+          </div>
+        </div>
       </div>
     </div>
   );
