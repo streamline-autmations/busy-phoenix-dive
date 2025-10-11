@@ -2,13 +2,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
 
-export default function ImageUploader({ onDone }: { onDone: (urls: string[]) => void }) {
+interface ImageUploaderProps {
+  onDone: (urls: string[]) => void;
+}
+
+export default function ImageUploader({ onDone }: ImageUploaderProps) {
   const { uploadOne } = useCloudinaryUpload();
   const [busy, setBusy] = useState(false);
 
   async function handle(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || !files.length) return;
+    
     setBusy(true);
     try {
       const urls: string[] = [];

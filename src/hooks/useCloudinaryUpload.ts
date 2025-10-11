@@ -4,21 +4,35 @@ export function useCloudinaryUpload() {
   const FOLDER = (import.meta.env.VITE_CLOUDINARY_FOLDER as string) || "blom/products";
 
   async function uploadOne(file: File): Promise<string> {
-    if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error("Cloudinary envs missing");
-    if (file.size > 10 * 1024 * 1024) throw new Error(`"${file.name}" exceeds 10MB`);
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      throw new Error("Cloudinary environment variables are missing. Please check VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET");
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error(`File "${file.name}" exceeds 10MB limit`);
+    }
 
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("upload_preset", UPLOAD_PRESET);
-    fd.append("folder", FOLDER);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("folder", FOLDER);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
-      method: "POST",
-      body: fd,
-    });
-    const j = await res.json();
-    if (!res.ok || j.error) throw new Error(j.error?.message || "Upload failed");
-    return j.secure_url as string;
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || result.error) {
+        throw new Error(result.error?.message || "Upload failed");
+      }
+      
+      return result.secure_url as string;
+    } catch (error) {
+      throw new Error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   return { uploadOne };
