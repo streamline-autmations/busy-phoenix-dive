@@ -50,6 +50,9 @@ export async function uploadToCloudinary(file: File): Promise<string> {
 }
 
 export async function postJSON<T>(url: string, body: unknown): Promise<T> {
+  console.log('🚀 Sending webhook request to:', url);
+  console.log('📦 Payload:', JSON.stringify(body, null, 2));
+  
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -60,7 +63,20 @@ export async function postJSON<T>(url: string, body: unknown): Promise<T> {
       body: JSON.stringify(body),
     });
 
-    const result = await response.json();
+    console.log('📡 Response status:', response.status, response.statusText);
+    
+    let result;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      const text = await response.text();
+      console.log('📄 Response text:', text);
+      result = { message: text };
+    }
+
+    console.log('📥 Response data:', result);
 
     if (!response.ok) {
       throw new APIError(
@@ -72,6 +88,7 @@ export async function postJSON<T>(url: string, body: unknown): Promise<T> {
 
     return result as T;
   } catch (error) {
+    console.error('❌ Webhook request failed:', error);
     if (error instanceof APIError) throw error;
     throw new APIError(
       `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`

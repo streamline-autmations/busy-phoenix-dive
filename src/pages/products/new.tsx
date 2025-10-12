@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Upload, X, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, X, CheckCircle, Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import ProductPreview from '@/components/ProductPreview';
 import { uploadToCloudinary, postJSON } from '@/lib/api';
@@ -120,12 +120,16 @@ export default function NewProductPage() {
         meta: {
           appVersion: optionalEnv.APP_VERSION,
           submittedAt: new Date().toISOString(),
+          webhookUrl: env.N8N_WEBHOOK_URL,
         },
       };
 
-      await postJSON(env.N8N_WEBHOOK_URL, payload);
+      console.log('🎯 Submitting to webhook:', env.N8N_WEBHOOK_URL);
       
-      toast.success('Draft sent to n8n (PR will open)');
+      const result = await postJSON(env.N8N_WEBHOOK_URL, payload);
+      
+      toast.success('✅ Draft sent to n8n successfully! PR will be created.');
+      console.log('✅ Webhook response:', result);
       
       // Reset form after successful submission
       setDraft({
@@ -139,7 +143,7 @@ export default function NewProductPage() {
       });
       
     } catch (error) {
-      console.error('Submission failed:', error);
+      console.error('❌ Webhook submission failed:', error);
       toast.error(`Submission failed: ${error}`);
     } finally {
       setSubmitting(false);
@@ -156,6 +160,9 @@ export default function NewProductPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Add New Product</h1>
           <p className="text-gray-600">Create and preview your product before submitting to n8n</p>
+          <div className="mt-2 text-xs text-gray-500 font-mono">
+            Webhook: {env.N8N_WEBHOOK_URL}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -285,91 +292,72 @@ export default function NewProductPage() {
                 <CardTitle>Product Images</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Thumbnail */}
-                <div className="space-y-2">
-                  <Label>Thumbnail Image</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e.target.files, 'thumbnail')}
-                      className="hidden"
-                      id="thumbnail-upload"
-                    />
-                    <label
-                      htmlFor="thumbnail-upload"
-                      className="flex flex-col items-center justify-center cursor-pointer"
-                    >
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">Click to upload thumbnail</span>
-                    </label>
-                  </div>
-                  {draft.thumbnail && (
-                    <div className="relative inline-block">
-                      <img
-                        src={draft.thumbnail}
-                        alt="Thumbnail"
-                        className="w-20 h-20 object-cover rounded border"
-                      />
-                      <button
-                        onClick={() => updateDraft({ thumbnail: undefined })}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
+                {/* For now, let's use placeholder images since Cloudinary isn't configured */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    📸 Image uploads require Cloudinary configuration. For testing, you can add image URLs manually in the preview.
+                  </p>
                 </div>
 
-                <Separator />
-
-                {/* Gallery */}
+                {/* Manual image URL input for testing */}
                 <div className="space-y-2">
-                  <Label>Gallery Images</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleFileUpload(e.target.files, 'gallery')}
-                      className="hidden"
-                      id="gallery-upload"
+                  <Label htmlFor="imageUrl">Add Image URL (for testing)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="imageUrl"
+                      placeholder="https://example.com/image.jpg"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          const url = (e.target as HTMLInputElement).value.trim();
+                          if (url) {
+                            updateDraft({ 
+                              images: [...(draft.images || []), url],
+                              thumbnail: draft.thumbnail || url
+                            });
+                            (e.target as HTMLInputElement).value = '';
+                          }
+                        }
+                      }}
                     />
-                    <label
-                      htmlFor="gallery-upload"
-                      className="flex flex-col items-center justify-center cursor-pointer"
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById('imageUrl') as HTMLInputElement;
+                        const url = input.value.trim();
+                        if (url) {
+                          updateDraft({ 
+                            images: [...(draft.images || []), url],
+                            thumbnail: draft.thumbnail || url
+                          });
+                          input.value = '';
+                        }
+                      }}
                     >
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">Click to upload gallery images</span>
-                    </label>
+                      Add
+                    </Button>
                   </div>
-                  {draft.images && draft.images.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {draft.images.map((url, i) => (
-                        <div key={i} className="relative">
-                          <img
-                            src={url}
-                            alt={`Gallery ${i + 1}`}
-                            className="w-full aspect-square object-cover rounded border"
-                          />
-                          <button
-                            onClick={() => updateDraft({
-                              images: draft.images?.filter((_, idx) => idx !== i)
-                            })}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                {isUploading && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Uploading images...
+                {draft.images && draft.images.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {draft.images.map((url, i) => (
+                      <div key={i} className="relative">
+                        <img
+                          src={url}
+                          alt={`Gallery ${i + 1}`}
+                          className="w-full aspect-square object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => updateDraft({
+                            images: draft.images?.filter((_, idx) => idx !== i)
+                          })}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -484,16 +472,19 @@ export default function NewProductPage() {
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting...
+                    Submitting to n8n...
                   </>
                 ) : (
-                  'Submit to n8n'
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit to n8n
+                  </>
                 )}
               </Button>
-              {!isUploading && draft.images && draft.images.length > 0 && (
+              {draft.images && draft.images.length > 0 && (
                 <div className="flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Synced to Cloudinary</span>
+                  <span className="text-sm">Images Ready</span>
                 </div>
               )}
             </div>
