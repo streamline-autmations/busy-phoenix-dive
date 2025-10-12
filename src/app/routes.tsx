@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import AddProductPage from "@/pages/admin/AddProductPage";
 import EditProductPage from "@/pages/admin/EditProductPage";
+import NewProductPage from "@/pages/products/new.tsx";
 
 function HomePage() {
   return (
@@ -11,10 +12,16 @@ function HomePage() {
         <div className="space-y-3">
           <div>
             <a 
-              href="/admin/products/new" 
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              href="/products/new" 
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mr-4"
             >
-              Add New Product
+              Add Product (n8n)
+            </a>
+            <a 
+              href="/admin/products/new" 
+              className="inline-block bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Add Product (Legacy)
             </a>
           </div>
           <div className="text-sm text-gray-500">
@@ -30,6 +37,10 @@ export const router = createBrowserRouter([
   { 
     path: "/", 
     element: <HomePage /> 
+  },
+  { 
+    path: "/products/new", 
+    element: <NewProductPage /> 
   },
   { 
     path: "/admin/products/new", 
