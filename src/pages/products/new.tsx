@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Upload, X, CheckCircle, Loader2, Send } from 'lucide-react';
+import { Upload, X, CheckCircle, Loader2, Send, TestTube } from 'lucide-react';
 import { toast } from 'sonner';
 import ProductPreview from '@/components/ProductPreview';
 import { uploadToCloudinary, postJSON } from '@/lib/api';
@@ -27,6 +27,7 @@ export default function NewProductPage() {
 
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [newBadge, setNewBadge] = useState('');
 
@@ -101,6 +102,59 @@ export default function NewProductPage() {
     updateDraft({ badges: draft.badges?.filter(badge => badge !== badgeToRemove) });
   }, [draft.badges, updateDraft]);
 
+  const sendTestWebhook = useCallback(async () => {
+    setTesting(true);
+    
+    try {
+      const testPayload = {
+        source: 'owner_portal',
+        action: 'create_or_update_product',
+        draft: {
+          title: 'Test Product - Sample Item',
+          slug: 'test-product-sample-item',
+          price: 299.99,
+          currency: 'ZAR' as const,
+          sku: 'TEST-001',
+          status: 'draft' as const,
+          stock: 10,
+          category: 'electronics',
+          tags: ['test', 'sample', 'electronics'],
+          badges: ['New', 'Featured'],
+          thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+          images: [
+            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=600&fit=crop'
+          ],
+          shortDescription: 'This is a test product created to verify the webhook integration is working correctly.',
+          descriptionHtml: '<p>This is a <strong>test product</strong> with HTML formatting.</p><ul><li>Feature 1</li><li>Feature 2</li><li>Feature 3</li></ul>',
+          seo: {
+            title: 'Test Product - Sample Item | BLOM Store',
+            description: 'Test product for webhook integration testing with sample data and images.'
+          }
+        },
+        meta: {
+          appVersion: optionalEnv.APP_VERSION,
+          submittedAt: new Date().toISOString(),
+          webhookUrl: env.N8N_WEBHOOK_URL,
+          testMode: true,
+        },
+      };
+
+      console.log('🧪 Sending test payload to webhook...');
+      
+      const result = await postJSON(env.N8N_WEBHOOK_URL, testPayload);
+      
+      toast.success('✅ Test webhook sent successfully! Check your n8n workflow.');
+      console.log('✅ Test webhook response:', result);
+      
+    } catch (error) {
+      console.error('❌ Test webhook failed:', error);
+      toast.error(`Test webhook failed: ${error}`);
+    } finally {
+      setTesting(false);
+    }
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     const normalizedDraft = normalizeDraft(draft);
     const errors = validateDraft(normalizedDraft);
@@ -162,6 +216,34 @@ export default function NewProductPage() {
           <p className="text-gray-600">Create and preview your product before submitting to n8n</p>
           <div className="mt-2 text-xs text-gray-500 font-mono">
             Webhook: {env.N8N_WEBHOOK_URL}
+          </div>
+          
+          {/* Test Webhook Button */}
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-blue-900">Test Webhook Integration</h3>
+                <p className="text-sm text-blue-700">Send a sample product to verify your n8n workflow is working</p>
+              </div>
+              <Button
+                onClick={sendTestWebhook}
+                disabled={testing}
+                variant="outline"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {testing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Send Test
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
