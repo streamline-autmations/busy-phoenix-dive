@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Loader2, Send, TestTube, Monitor, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
 import ProductCardTemplate from '@/templates/ProductCard';
+import ProductPageTemplate from '@/templates/ProductPage';
 import { postJSON } from '@/lib/api';
 import { env, optionalEnv } from '@/lib/env';
 import { type ProductDraft, normalizeDraft, slugify, validateDraft } from '@/lib/productSchema';
@@ -166,7 +168,7 @@ export default function NewProductPage() {
   const isUploading = Object.values(uploading).some(Boolean);
   const canSubmit = !submitting && !isUploading && validateDraft(normalizedDraft).length === 0;
 
-  // Create preview data for the template
+  // Create preview data for the templates
   const previewProduct = {
     id: 'preview',
     title: draft.title || 'Sample Product Title',
@@ -174,11 +176,16 @@ export default function NewProductPage() {
     originalPrice: undefined,
     currency: draft.currency || 'ZAR',
     image: draft.thumbnail || draft.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+    images: draft.images?.length ? draft.images : undefined,
     rating: 4.5,
     reviews: 128,
     badges: draft.badges,
     category: draft.category,
-    inStock: true
+    inStock: true,
+    shortDescription: draft.shortDescription,
+    descriptionHtml: draft.descriptionHtml,
+    sku: draft.sku,
+    tags: draft.tags
   };
 
   return (
@@ -521,13 +528,34 @@ export default function NewProductPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div 
-                  className={`border rounded-lg overflow-hidden bg-gray-50 p-4 ${
-                    viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
-                  }`}
-                >
-                  <ProductCardTemplate product={previewProduct} />
-                </div>
+                <Tabs defaultValue="card" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="card">Card Preview</TabsTrigger>
+                    <TabsTrigger value="page">Page Preview</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="card" className="mt-4">
+                    <div 
+                      className={`border rounded-lg overflow-hidden bg-gray-50 p-4 ${
+                        viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
+                      }`}
+                    >
+                      <ProductCardTemplate product={previewProduct} />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="page" className="mt-4">
+                    <div 
+                      className={`border rounded-lg overflow-hidden bg-white max-h-96 overflow-y-auto ${
+                        viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
+                      }`}
+                    >
+                      <div className="transform scale-75 origin-top">
+                        <ProductPageTemplate product={previewProduct} />
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>

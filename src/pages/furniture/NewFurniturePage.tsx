@@ -11,6 +11,7 @@ import { X, Loader2, Send, TestTube, Monitor, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
 import FurnitureCardTemplate from '@/templates/FurnitureCard';
+import FurniturePageTemplate from '@/templates/FurniturePage';
 import { postJSON } from '@/lib/api';
 import { env, optionalEnv } from '@/lib/env';
 import { slugify } from '@/lib/slugify';
@@ -160,7 +161,7 @@ export default function NewFurniturePage() {
     }
   }, [draft]);
 
-  // Create preview data for the template
+  // Create preview data for the templates
   const previewFurniture = {
     id: 'preview',
     title: draft.title || 'Sample Furniture Title',
@@ -168,13 +169,21 @@ export default function NewFurniturePage() {
     originalPrice: draft.originalPrice,
     currency: draft.currency,
     image: draft.thumbnail || draft.images?.[0] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
+    images: draft.images?.length ? draft.images : undefined,
     dimensions: draft.dimensions,
     material: draft.material,
     finish: draft.finish,
     deliveryTime: draft.deliveryTime,
     badges: draft.badges,
     category: draft.category,
-    inStock: true
+    inStock: true,
+    shortDescription: draft.shortDescription,
+    descriptionHtml: draft.descriptionHtml,
+    sku: draft.sku,
+    weight: draft.weight,
+    assembly: draft.assembly,
+    warranty: draft.warranty,
+    careInstructions: draft.careInstructions
   };
 
   return (
@@ -277,6 +286,28 @@ export default function NewFurniturePage() {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="shortDescription">Short Description</Label>
+                  <Textarea
+                    id="shortDescription"
+                    placeholder="Brief furniture description"
+                    rows={2}
+                    value={draft.shortDescription || ''}
+                    onChange={(e) => updateDraft({ shortDescription: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="descriptionHtml">Full Description (HTML allowed)</Label>
+                  <Textarea
+                    id="descriptionHtml"
+                    placeholder="Detailed furniture description with HTML formatting"
+                    rows={4}
+                    value={draft.descriptionHtml || ''}
+                    onChange={(e) => updateDraft({ descriptionHtml: e.target.value })}
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -348,6 +379,7 @@ export default function NewFurniturePage() {
                     <Label htmlFor="material">Material</Label>
                     <Input
                       id="material"
+                
                       placeholder="e.g., Solid Oak Wood"
                       value={draft.material || ''}
                       onChange={(e) => updateDraft({ material: e.target.value })}
@@ -492,6 +524,70 @@ export default function NewFurniturePage() {
               </CardContent>
             </Card>
 
+            {/* Tags & Badges */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags & Badges</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add tag"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    />
+                    <Button onClick={addTag} variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </div>
+                  {draft.tags && draft.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {draft.tags.map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="flex items-center gap-1">
+                          {tag}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => removeTag(tag)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Badges</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add badge (e.g., New, Sale, Featured)"
+                      value={newBadge}
+                      onChange={(e) => setNewBadge(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBadge())}
+                    />
+                    <Button onClick={addBadge} variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </div>
+                  {draft.badges && draft.badges.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {draft.badges.map((badge, i) => (
+                        <Badge key={i} className="flex items-center gap-1">
+                          {badge}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => removeBadge(badge)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
@@ -538,13 +634,34 @@ export default function NewFurniturePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div 
-                  className={`border rounded-lg overflow-hidden bg-gray-50 p-4 ${
-                    viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
-                  }`}
-                >
-                  <FurnitureCardTemplate furniture={previewFurniture} />
-                </div>
+                <Tabs defaultValue="card" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="card">Card Preview</TabsTrigger>
+                    <TabsTrigger value="page">Page Preview</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="card" className="mt-4">
+                    <div 
+                      className={`border rounded-lg overflow-hidden bg-gray-50 p-4 ${
+                        viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
+                      }`}
+                    >
+                      <FurnitureCardTemplate furniture={previewFurniture} />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="page" className="mt-4">
+                    <div 
+                      className={`border rounded-lg overflow-hidden bg-white max-h-96 overflow-y-auto ${
+                        viewport === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
+                      }`}
+                    >
+                      <div className="transform scale-75 origin-top">
+                        <FurniturePageTemplate furniture={previewFurniture} />
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
