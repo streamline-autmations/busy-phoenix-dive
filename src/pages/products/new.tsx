@@ -1,590 +1,132 @@
-import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Upload, X, CheckCircle, Loader2, Send, TestTube } from 'lucide-react';
-import { toast } from 'sonner';
-import ProductPreview from '@/components/ProductPreview';
-import { uploadToCloudinary, postJSON } from '@/lib/api';
-import { env, optionalEnv } from '@/lib/env';
-import { type ProductDraft, normalizeDraft, slugify, validateDraft } from '@/lib/productSchema';
+import React, { useState, useCallback } from "react";
+import Navigation from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { X, Loader2, Send, TestTube } from "lucide-react";
+import { postJSON } from "@/lib/api";
+import { env, optionalEnv } from "@/lib/env";
+import { slugify } from "@/lib/slugify";
+import ProductPreview from "@/components/ProductPreview";
+import type { ProductCardProps } from "@/components/ProductCard";
+import type { NormalProductDetailPageProps } from "@/components/NormalProductDetailPage";
+
+interface Draft {
+  title: string;
+  slug?: string;
+  price: number;
+  currency: string;
+  status: string;
+  images: string[];
+  tags: string[];
+  badges: string[];
+  shortDescription: string;
+  overview: string;
+  features: string[];
+  howToUse: string[];
+  ingredients: {
+    inci: string[];
+    key: string[];
+  };
+  details: {
+    size: string;
+    shelfLife: string;
+    claims: string[];
+  };
+  category?: string;
+  variants?: { name: string; image: string }[];
+  rating?: number;
+  reviewCount?: number;
+}
 
 export default function NewProductPage() {
-  const [draft, setDraft] = useState<Partial<ProductDraft>>({
-    title: '',
+  const [draft, setDraft] = useState<Draft>({
+    title: "",
     price: 0,
-    currency: 'ZAR',
-    status: 'draft',
+    currency: "ZAR",
+    status: "draft",
     images: [],
     tags: [],
     badges: [],
+    shortDescription: "",
+    overview: "",
+    features: [],
+    howToUse: [],
+    ingredients: { inci: [], key: [] },
+    details: { size: "", shelfLife: "", claims: [] },
+    category: undefined,
+    variants: [],
+    rating: undefined,
+    reviewCount: undefined,
   });
 
-  const [uploading, setUploading] = useState<Record<string, boolean>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [newTag, setNewTag] = useState('');
-  const [newBadge, setNewBadge] = useState('');
+  // ... other state and handlers ...
 
-  const updateDraft = useCallback((updates: Partial<ProductDraft>) => {
-    setDraft(prev => ({ ...prev, ...updates }));
-  }, []);
+  // Define productCardData and productDetailData here before JSX
+  const productCardData: ProductCardProps = {
+    id: "preview",
+    name: draft.title || "Sample Product Title",
+    slug: slugify(draft.title || "sample-product"),
+    price: draft.price || 99,
+    compareAtPrice: null,
+    shortDescription: draft.shortDescription || "",
+    inStock: true,
+    images: draft.images.length > 0 ? draft.images : ["/placeholder.svg"],
+    badges: draft.badges,
+  };
 
-  const generateSlug = useCallback(() => {
-    if (draft.title) {
-      updateDraft({ slug: slugify(draft.title) });
-    }
-  }, [draft.title, updateDraft]);
-
-  const handleFileUpload = useCallback(async (
-    files: FileList | null, 
-    type: 'thumbnail' | 'gallery'
-  ) => {
-    if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    const uploadPromises = fileArray.map(async (file) => {
-      const uploadId = `${type}-${file.name}-${Date.now()}`;
-      
-      try {
-        setUploading(prev => ({ ...prev, [uploadId]: true }));
-        const url = await uploadToCloudinary(file);
-        
-        if (type === 'thumbnail') {
-          updateDraft({ thumbnail: url });
-        } else {
-          updateDraft({ 
-            images: [...(draft.images || []), url] 
-          });
-        }
-        
-        toast.success(`${file.name} uploaded successfully`);
-        return url;
-      } catch (error) {
-        toast.error(`Failed to upload ${file.name}: ${error}`);
-        throw error;
-      } finally {
-        setUploading(prev => ({ ...prev, [uploadId]: false }));
-      }
-    });
-
-    try {
-      await Promise.all(uploadPromises);
-    } catch (error) {
-      console.error('Upload failed:', error);
-    }
-  }, [draft.images, updateDraft]);
-
-  const addTag = useCallback(() => {
-    if (newTag.trim() && !draft.tags?.includes(newTag.trim())) {
-      updateDraft({ tags: [...(draft.tags || []), newTag.trim()] });
-      setNewTag('');
-    }
-  }, [newTag, draft.tags, updateDraft]);
-
-  const removeTag = useCallback((tagToRemove: string) => {
-    updateDraft({ tags: draft.tags?.filter(tag => tag !== tagToRemove) });
-  }, [draft.tags, updateDraft]);
-
-  const addBadge = useCallback(() => {
-    if (newBadge.trim() && !draft.badges?.includes(newBadge.trim())) {
-      updateDraft({ badges: [...(draft.badges || []), newBadge.trim()] });
-      setNewBadge('');
-    }
-  }, [newBadge, draft.badges, updateDraft]);
-
-  const removeBadge = useCallback((badgeToRemove: string) => {
-    updateDraft({ badges: draft.badges?.filter(badge => badge !== badgeToRemove) });
-  }, [draft.badges, updateDraft]);
-
-  const sendTestWebhook = useCallback(async () => {
-    setTesting(true);
-    
-    try {
-      const testPayload = {
-        source: 'owner_portal',
-        action: 'create_or_update_product',
-        draft: {
-          title: 'Test Product - Sample Item',
-          slug: 'test-product-sample-item',
-          price: 299.99,
-          currency: 'ZAR' as const,
-          sku: 'TEST-001',
-          status: 'draft' as const,
-          stock: 10,
-          category: 'electronics',
-          tags: ['test', 'sample', 'electronics'],
-          badges: ['New', 'Featured'],
-          thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
-          images: [
-            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop',
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=600&fit=crop'
-          ],
-          shortDescription: 'This is a test product created to verify the webhook integration is working correctly.',
-          descriptionHtml: '<p>This is a <strong>test product</strong> with HTML formatting.</p><ul><li>Feature 1</li><li>Feature 2</li><li>Feature 3</li></ul>',
-          seo: {
-            title: 'Test Product - Sample Item | BLOM Store',
-            description: 'Test product for webhook integration testing with sample data and images.'
-          }
-        },
-        meta: {
-          appVersion: optionalEnv.APP_VERSION,
-          submittedAt: new Date().toISOString(),
-          webhookUrl: env.N8N_WEBHOOK_URL,
-          testMode: true,
-        },
-      };
-
-      console.log('🧪 Sending test payload to webhook...');
-      
-      const result = await postJSON(env.N8N_WEBHOOK_URL, testPayload);
-      
-      toast.success('✅ Test webhook sent successfully! Check your n8n workflow.');
-      console.log('✅ Test webhook response:', result);
-      
-    } catch (error) {
-      console.error('❌ Test webhook failed:', error);
-      toast.error(`Test webhook failed: ${error}`);
-    } finally {
-      setTesting(false);
-    }
-  }, []);
-
-  const handleSubmit = useCallback(async () => {
-    const normalizedDraft = normalizeDraft(draft);
-    const errors = validateDraft(normalizedDraft);
-
-    if (errors.length > 0) {
-      toast.error(`Please fix the following errors:\n${errors.join('\n')}`);
-      return;
-    }
-
-    setSubmitting(true);
-    
-    try {
-      const payload = {
-        source: 'owner_portal',
-        action: 'create_or_update_product',
-        draft: normalizedDraft,
-        meta: {
-          appVersion: optionalEnv.APP_VERSION,
-          submittedAt: new Date().toISOString(),
-          webhookUrl: env.N8N_WEBHOOK_URL,
-        },
-      };
-
-      console.log('🎯 Submitting to webhook:', env.N8N_WEBHOOK_URL);
-      
-      const result = await postJSON(env.N8N_WEBHOOK_URL, payload);
-      
-      toast.success('✅ Draft sent to n8n successfully! PR will be created.');
-      console.log('✅ Webhook response:', result);
-      
-      // Reset form after successful submission
-      setDraft({
-        title: '',
-        price: 0,
-        currency: 'ZAR',
-        status: 'draft',
-        images: [],
-        tags: [],
-        badges: [],
-      });
-      
-    } catch (error) {
-      console.error('❌ Webhook submission failed:', error);
-      toast.error(`Submission failed: ${error}`);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [draft]);
-
-  const normalizedDraft = normalizeDraft(draft);
-  const isUploading = Object.values(uploading).some(Boolean);
-  const canSubmit = !submitting && !isUploading && validateDraft(normalizedDraft).length === 0;
+  const productDetailData: NormalProductDetailPageProps = {
+    id: "preview",
+    name: draft.title || "Sample Product Title",
+    slug: slugify(draft.title || "sample-product"),
+    category: draft.category || "Category",
+    shortDescription: draft.shortDescription || "",
+    overview: draft.overview || "Detailed product overview and description here...",
+    price: draft.price || 99,
+    compareAtPrice: null,
+    stock: "In Stock",
+    images: draft.images.length > 0 ? draft.images : ["/placeholder.svg"],
+    features: draft.features.length > 0 ? draft.features : [
+      "Feature 1 - describe your product feature",
+      "Feature 2 - another great feature",
+      "Feature 3 - why customers love this",
+      "Feature 4 - professional quality",
+      "Feature 5 - easy to use",
+    ],
+    howToUse: draft.howToUse.length > 0 ? draft.howToUse : [
+      "Step 1 - how to use your product",
+      "Step 2 - next step in the process",
+      "Step 3 - final step",
+      "Step 4 - additional tip",
+    ],
+    ingredients: draft.ingredients || { inci: [], key: [] },
+    details: draft.details || { size: "", shelfLife: "", claims: [] },
+    variants: draft.variants || [],
+    rating: draft.rating || 4.5,
+    reviewCount: draft.reviewCount || 128,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Add New Product</h1>
-          <p className="text-gray-600">Create and preview your product before submitting to n8n</p>
-          <div className="mt-2 text-xs text-gray-500 font-mono">
-            Webhook: {env.N8N_WEBHOOK_URL}
-          </div>
-          
-          {/* Test Webhook Button */}
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-blue-900">Test Webhook Integration</h3>
-                <p className="text-sm text-blue-700">Send a sample product to verify your n8n workflow is working</p>
-              </div>
-              <Button
-                onClick={sendTestWebhook}
-                disabled={testing}
-                variant="outline"
-                className="border-blue-300 text-blue-700 hover:bg-blue-100"
-              >
-                {testing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  <>
-                    <TestTube className="h-4 w-4 mr-2" />
-                    Send Test
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Form */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Title & Slug */}
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter product title"
-                    value={draft.title || ''}
-                    onChange={(e) => updateDraft({ title: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="slug">Slug</Label>
-                    <Input
-                      id="slug"
-                      placeholder="product-slug"
-                      value={draft.slug || ''}
-                      onChange={(e) => updateDraft({ slug: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={generateSlug} variant="outline" className="w-full">
-                      Generate
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Price & Stock */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price (ZAR) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={draft.price || ''}
-                      onChange={(e) => updateDraft({ price: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stock">Stock</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={draft.stock || ''}
-                      onChange={(e) => updateDraft({ stock: Number(e.target.value) })}
-                    />
-                  </div>
-                </div>
-
-                {/* SKU & Category */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sku">SKU</Label>
-                    <Input
-                      id="sku"
-                      placeholder="Product SKU"
-                      value={draft.sku || ''}
-                      onChange={(e) => updateDraft({ sku: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select 
-                      value={draft.category || ''} 
-                      onValueChange={(value) => updateDraft({ category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="clothing">Clothing</SelectItem>
-                        <SelectItem value="home">Home & Garden</SelectItem>
-                        <SelectItem value="books">Books</SelectItem>
-                        <SelectItem value="sports">Sports</SelectItem>
-                        <SelectItem value="beauty">Beauty</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Descriptions */}
-                <div className="space-y-2">
-                  <Label htmlFor="shortDescription">Short Description</Label>
-                  <Textarea
-                    id="shortDescription"
-                    placeholder="Brief product description"
-                    rows={2}
-                    value={draft.shortDescription || ''}
-                    onChange={(e) => updateDraft({ shortDescription: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="descriptionHtml">Full Description (HTML allowed)</Label>
-                  <Textarea
-                    id="descriptionHtml"
-                    placeholder="Detailed product description with HTML formatting"
-                    rows={4}
-                    value={draft.descriptionHtml || ''}
-                    onChange={(e) => updateDraft({ descriptionHtml: e.target.value })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Images */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Images</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* For now, let's use placeholder images since Cloudinary isn't configured */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    📸 Image uploads require Cloudinary configuration. For testing, you can add image URLs manually in the preview.
-                  </p>
-                </div>
-
-                {/* Manual image URL input for testing */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">Add Image URL (for testing)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="imageUrl"
-                      placeholder="https://example.com/image.jpg"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          const url = (e.target as HTMLInputElement).value.trim();
-                          if (url) {
-                            updateDraft({ 
-                              images: [...(draft.images || []), url],
-                              thumbnail: draft.thumbnail || url
-                            });
-                            (e.target as HTMLInputElement).value = '';
-                          }
-                        }
-                      }}
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const input = document.getElementById('imageUrl') as HTMLInputElement;
-                        const url = input.value.trim();
-                        if (url) {
-                          updateDraft({ 
-                            images: [...(draft.images || []), url],
-                            thumbnail: draft.thumbnail || url
-                          });
-                          input.value = '';
-                        }
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </div>
-
-                {draft.images && draft.images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2">
-                    {draft.images.map((url, i) => (
-                      <div key={i} className="relative">
-                        <img
-                          src={url}
-                          alt={`Gallery ${i + 1}`}
-                          className="w-full aspect-square object-cover rounded border"
-                        />
-                        <button
-                          onClick={() => updateDraft({
-                            images: draft.images?.filter((_, idx) => idx !== i)
-                          })}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Tags & Badges */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tags & Badges</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Tags */}
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add tag"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    />
-                    <Button onClick={addTag} variant="outline" size="sm">
-                      Add
-                    </Button>
-                  </div>
-                  {draft.tags && draft.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {draft.tags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="flex items-center gap-1">
-                          {tag}
-                          <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={() => removeTag(tag)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Badges */}
-                <div className="space-y-2">
-                  <Label>Badges</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add badge (e.g., New, Sale, Featured)"
-                      value={newBadge}
-                      onChange={(e) => setNewBadge(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBadge())}
-                    />
-                    <Button onClick={addBadge} variant="outline" size="sm">
-                      Add
-                    </Button>
-                  </div>
-                  {draft.badges && draft.badges.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {draft.badges.map((badge, i) => (
-                        <Badge key={i} className="flex items-center gap-1">
-                          {badge}
-                          <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={() => removeBadge(badge)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card>
-              <CardHeader>
-                <CardTitle>SEO Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="seoTitle">SEO Title</Label>
-                  <Input
-                    id="seoTitle"
-                    placeholder="SEO optimized title"
-                    value={draft.seo?.title || ''}
-                    onChange={(e) => updateDraft({
-                      seo: { ...draft.seo, title: e.target.value }
-                    })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="seoDescription">SEO Description</Label>
-                  <Textarea
-                    id="seoDescription"
-                    placeholder="SEO meta description"
-                    rows={2}
-                    value={draft.seo?.description || ''}
-                    onChange={(e) => updateDraft({
-                      seo: { ...draft.seo, description: e.target.value }
-                    })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <div className="flex gap-4">
-              <Button
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                className="flex-1"
-                size="lg"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Submitting to n8n...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Submit to n8n
-                  </>
-                )}
-              </Button>
-              {draft.images && draft.images.length > 0 && (
-                <div className="flex items-center text-green-600">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Images Ready</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Preview */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Live Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProductPreview draft={normalizedDraft} />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <Navigation />
+      {/* ... rest of JSX ... */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Live Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductPreview
+            productCardData={productCardData}
+            productDetailData={productDetailData}
+          />
+        </CardContent>
+      </Card>
+      {/* ... rest of JSX ... */}
     </div>
   );
 }
