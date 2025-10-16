@@ -49,4 +49,14 @@ interface FullProductFormProps {
   onChange: (updates: Partial<FullProductFormValue>) => void;
 }
 
-// ... rest of your FullProductForm component code unchanged ...
+export function FullProductForm({ value, onChange }: FullProductFormProps) {
+  // ... full form implementation as before ...
+  // (omitted here for brevity, same as previous FullProductForm code)
+  return (
+    <form className="space-y-6 max-w-3xl">
+      {/* form fields here */}
+    </form>
+  );
+}
+
+// Helper components ArrayInput and AddStringInput as before

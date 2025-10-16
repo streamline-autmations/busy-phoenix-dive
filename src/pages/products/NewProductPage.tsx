@@ -1,125 +1,78 @@
 import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
-import ProductForm from "@/components/ProductForm";
+import { FullProductForm, FullProductFormValue } from "@/components/FullProductForm";
 import ProductPreview from "@/components/ProductPreview";
 import { slugify } from "@/lib/slugify";
 import type { ProductCardProps } from "@/components/ProductCard";
 import type { NormalProductDetailPageProps } from "@/components/NormalProductDetailPage";
 
-// Define ProductFormValue type locally
-type ProductFormValue = {
-  title?: string;
-  slug?: string;
-  price?: number;
-  currency?: string;
-  status?: string;
-  thumbnailId?: string;
-  imageIds?: string[];
-  tags?: string[];
-  badges?: string[];
-  shortDescription?: string;
-  overview?: string;
-  features?: string[];
-  howToUse?: string[];
-  ingredients?: {
-    inci?: string[];
-    key?: string[];
-  };
-  details?: {
-    size?: string;
-    shelfLife?: string;
-    claims?: string[];
-  };
-  category?: string;
-  variants?: { name: string; image: string }[];
-  rating?: number;
-  reviewCount?: number;
-};
-
 export default function NewProductPage() {
-  const [draft, setDraft] = useState<ProductFormValue>({
-    title: "",
+  const [draft, setDraft] = useState<FullProductFormValue>({
+    id: "preview",
+    name: "",
     slug: "",
     price: 0,
-    currency: "ZAR",
-    status: "draft",
-    thumbnailId: "",
-    imageIds: [],
-    tags: [],
-    badges: [],
+    compareAtPrice: null,
     shortDescription: "",
+    inStock: true,
+    images: [],
+    badges: [],
+    variants: [],
+    category: "",
     overview: "",
     features: [],
     howToUse: [],
     ingredients: { inci: [], key: [] },
     details: { size: "", shelfLife: "", claims: [] },
-    category: "",
-    variants: [],
     rating: 0,
     reviewCount: 0,
   });
 
-  const onChange = (updates: Partial<ProductFormValue>) => {
-    setDraft((prev: ProductFormValue) => ({ ...prev, ...updates }));
-  };
-
-  const onSave = () => {
-    alert("Save clicked");
-  };
-
-  const onPublish = () => {
-    alert("Publish clicked");
-  };
-
+  // Map draft to ProductCardProps
   const productCardData: ProductCardProps = {
-    id: "preview",
-    name: draft.title || "Sample Product Title",
-    slug: draft.slug || slugify(draft.title || "sample-product"),
-    price: draft.price || 99,
-    compareAtPrice: null,
-    shortDescription: draft.shortDescription || "",
-    inStock: true,
+    id: draft.id,
+    name: draft.name || "Sample Product Title",
+    slug: draft.slug || slugify(draft.name || "sample-product"),
+    price: draft.price,
+    compareAtPrice: draft.compareAtPrice,
+    shortDescription: draft.shortDescription,
+    inStock: draft.inStock,
     images:
-      draft.imageIds && draft.imageIds.length > 0
-        ? draft.imageIds.map(
-            (id: string) =>
-              `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_800/${id}.webp`
-          )
-        : ["/placeholder.svg"],
+      draft.images.length > 0
+        ? draft.images
+        : ["/placeholder.svg", "/placeholder.svg"],
     badges: draft.badges,
   };
 
+  // Map draft to NormalProductDetailPageProps
   const productDetailData: NormalProductDetailPageProps = {
-    id: "preview",
-    name: draft.title || "Sample Product Title",
-    slug: draft.slug || slugify(draft.title || "sample-product"),
+    id: draft.id,
+    name: draft.name || "Sample Product Title",
+    slug: draft.slug || slugify(draft.name || "sample-product"),
     category: draft.category || "Category",
-    shortDescription: draft.shortDescription || "",
+    shortDescription: draft.shortDescription,
     overview: draft.overview || "Detailed product overview and description here...",
-    price: draft.price || 99,
-    compareAtPrice: null,
-    stock: "In Stock",
+    price: draft.price,
+    compareAtPrice: draft.compareAtPrice,
+    stock: draft.inStock ? "In Stock" : "Out of Stock",
     images:
-      draft.imageIds && draft.imageIds.length > 0
-        ? draft.imageIds.map(
-            (id: string) =>
-              `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_1400/${id}.webp`
-          )
-        : ["/placeholder.svg"],
-    features: draft.features || [],
-    howToUse: draft.howToUse || [],
+      draft.images.length > 0
+        ? draft.images
+        : ["/placeholder.svg", "/placeholder.svg"],
+    features: draft.features,
+    howToUse: draft.howToUse,
     ingredients: {
-      inci: draft.ingredients?.inci || [],
-      key: draft.ingredients?.key || [],
+      inci: draft.ingredients.inci,
+      key: draft.ingredients.key,
     },
     details: {
-      size: draft.details?.size || "",
-      shelfLife: draft.details?.shelfLife || "",
-      claims: draft.details?.claims || [],
+      size: draft.details.size,
+      shelfLife: draft.details.shelfLife,
+      claims: draft.details.claims,
     },
-    variants: draft.variants || [],
-    rating: draft.rating || 4.5,
-    reviewCount: draft.reviewCount || 128,
+    variants: draft.variants,
+    rating: draft.rating,
+    reviewCount: draft.reviewCount,
   };
 
   return (
@@ -128,7 +81,7 @@ export default function NewProductPage() {
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Add New Product</h1>
         <div className="grid lg:grid-cols-2 gap-8">
-          <ProductForm value={draft} onChange={onChange} onSave={onSave} onPublish={onPublish} />
+          <FullProductForm value={draft} onChange={setDraft} />
           <ProductPreview productCardData={productCardData} productDetailData={productDetailData} />
         </div>
       </div>
