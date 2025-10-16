@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import AddProductPage from "@/pages/admin/AddProductPage";
 import EditProductPage from "@/pages/admin/EditProductPage";
-import NewProductPage from "@/pages/products/NewProductPage";
+import { NewProductPage } from "@/pages/products/NewProductPage";
 import NewFurniturePage from "@/pages/furniture/NewFurniturePage";
 import Navigation from "@/components/Navigation";
 
