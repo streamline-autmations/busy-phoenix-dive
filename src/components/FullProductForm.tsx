@@ -47,16 +47,27 @@ export interface FullProductFormValue {
 interface FullProductFormProps {
   value: FullProductFormValue;
   onChange: (updates: Partial<FullProductFormValue>) => void;
+  onSave?: () => void;
+  onPublish?: () => void;
 }
 
-export function FullProductForm({ value, onChange }: FullProductFormProps) {
-  // ... full form implementation as before ...
-  // (omitted here for brevity, same as previous FullProductForm code)
+export function FullProductForm({ value, onChange, onSave, onPublish }: FullProductFormProps) {
+  // ... form implementation omitted for brevity, keep your existing inputs ...
+
+  // For brevity, only showing the buttons here:
   return (
     <form className="space-y-6 max-w-3xl">
-      {/* form fields here */}
+      {/* Your existing form fields here */}
+
+      {/* Save and Publish buttons */}
+      <div className="flex gap-2 pt-4 border-t">
+        <Button onClick={(e) => { e.preventDefault(); onSave && onSave(); }} variant="outline" className="flex-1">
+          💾 Save Draft
+        </Button>
+        <Button onClick={(e) => { e.preventDefault(); onPublish && onPublish(); }} className="flex-1">
+          🚀 Publish
+        </Button>
+      </div>
     </form>
   );
 }
-
-// Helper components ArrayInput and AddStringInput as before

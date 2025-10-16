@@ -28,9 +28,43 @@ export default function NewProductPage() {
     reviewCount: 0,
   });
 
-  // Wrap setDraft to accept partial updates and merge with current state
   function handleDraftChange(updates: Partial<FullProductFormValue>) {
     setDraft((prev) => ({ ...prev, ...updates }));
+  }
+
+  async function handleSave() {
+    try {
+      await fetch("https://dockerfile-1n82.onrender.com/webhook/products-intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "owner_portal",
+          action: "create_or_update_product",
+          product: draft,
+        }),
+      });
+      alert("Draft saved — branch updated!");
+    } catch (error) {
+      alert(`Failed to save draft: ${error}`);
+    }
+  }
+
+  async function handlePublish() {
+    try {
+      const response = await fetch("https://dockerfile-1n82.onrender.com/webhook/pr-intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchClean: `add-${draft.slug}`,
+          slug: draft.slug,
+          title: draft.name,
+        }),
+      });
+      const data = await response.json();
+      alert(`Preview ready: ${data.previewUrl}`);
+    } catch (error) {
+      alert(`Failed to publish: ${error}`);
+    }
   }
 
   // Map draft to ProductCardProps
@@ -86,7 +120,12 @@ export default function NewProductPage() {
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Add New Product</h1>
         <div className="grid lg:grid-cols-2 gap-8">
-          <FullProductForm value={draft} onChange={handleDraftChange} />
+          <FullProductForm
+            value={draft}
+            onChange={handleDraftChange}
+            onSave={handleSave}
+            onPublish={handlePublish}
+          />
           <ProductPreview productCardData={productCardData} productDetailData={productDetailData} />
         </div>
       </div>
