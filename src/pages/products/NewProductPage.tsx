@@ -69,6 +69,7 @@ export default function NewProductPage() {
   const [newBadge, setNewBadge] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState("");
 
   const updateDraft = useCallback(
     (updates: Partial<Draft>) => {
@@ -109,6 +110,20 @@ export default function NewProductPage() {
       updateDraft({ badges: draft.badges.filter((b) => b !== badgeToRemove) });
     },
     [draft.badges, updateDraft]
+  );
+
+  const addImageUrl = useCallback(() => {
+    if (newImageUrl.trim() && !draft.images.includes(newImageUrl.trim())) {
+      updateDraft({ images: [...draft.images, newImageUrl.trim()] });
+      setNewImageUrl("");
+    }
+  }, [newImageUrl, draft.images, updateDraft]);
+
+  const removeImage = useCallback(
+    (urlToRemove: string) => {
+      updateDraft({ images: draft.images.filter((url) => url !== urlToRemove) });
+    },
+    [draft.images, updateDraft]
   );
 
   const sendTestWebhook = useCallback(async () => {
@@ -249,7 +264,7 @@ export default function NewProductPage() {
     }
   }, [draft]);
 
-  // Define productCardData and productDetailData here to fix TS errors
+  // Prepare data for preview components
   const productCardData: ProductCardProps = {
     id: "preview",
     name: draft.title || "Sample Product Title",
@@ -333,12 +348,362 @@ export default function NewProductPage() {
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Form */}
-          <div className="space-y-6">
-            {/* ... form inputs unchanged ... */}
+          <div className="space-y-6 overflow-y-auto max-h-[80vh] pr-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Product Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter product title"
+                    value={draft.title}
+                    onChange={(e) => updateDraft({ title: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2 space-y-2">
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                      id="slug"
+                      placeholder="product-slug"
+                      value={draft.slug || ""}
+                      onChange={(e) => updateDraft({ slug: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={generateSlug} variant="outline" className="w-full">
+                      Generate
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price (ZAR) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={draft.price}
+                      onChange={(e) => updateDraft({ price: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={draft.category || ""}
+                      onValueChange={(value) => updateDraft({ category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="prep-finishing">Prep & Finishing</SelectItem>
+                        <SelectItem value="tools-essentials">Tools & Essentials</SelectItem>
+                        <SelectItem value="acrylic-systems">Acrylic Systems</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="shortDescription">Short Description</Label>
+                  <Textarea
+                    id="shortDescription"
+                    placeholder="Brief product description"
+                    rows={2}
+                    value={draft.shortDescription}
+                    onChange={(e) => updateDraft({ shortDescription: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="overview">Overview</Label>
+                  <Textarea
+                    id="overview"
+                    placeholder="Detailed product overview"
+                    rows={4}
+                    value={draft.overview}
+                    onChange={(e) => updateDraft({ overview: e.target.value })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Features & How To Use</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="features">Features (comma separated)</Label>
+                  <Input
+                    id="features"
+                    placeholder="Feature 1, Feature 2, Feature 3"
+                    value={draft.features.join(", ")}
+                    onChange={(e) =>
+                      updateDraft({
+                        features: e.target.value.split(",").map((f) => f.trim()),
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="howToUse">How to Use (comma separated)</Label>
+                  <Input
+                    id="howToUse"
+                    placeholder="Step 1, Step 2, Step 3"
+                    value={draft.howToUse.join(", ")}
+                    onChange={(e) =>
+                      updateDraft({
+                        howToUse: e.target.value.split(",").map((f) => f.trim()),
+                      })
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Ingredients</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ingredientsInci">Ingredients INCI (comma separated)</Label>
+                  <Input
+                    id="ingredientsInci"
+                    placeholder="Ingredient 1, Ingredient 2"
+                    value={draft.ingredients.inci.join(", ")}
+                    onChange={(e) =>
+                      updateDraft({
+                        ingredients: {
+                          ...draft.ingredients,
+                          inci: e.target.value.split(",").map((f) => f.trim()),
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ingredientsKey">Key Ingredients (comma separated)</Label>
+                  <Input
+                    id="ingredientsKey"
+                    placeholder="Key ingredient 1, Key ingredient 2"
+                    value={draft.ingredients.key.join(", ")}
+                    onChange={(e) =>
+                      updateDraft({
+                        ingredients: {
+                          ...draft.ingredients,
+                          key: e.target.value.split(",").map((f) => f.trim()),
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="detailsSize">Size</Label>
+                  <Input
+                    id="detailsSize"
+                    placeholder="15ml"
+                    value={draft.details.size}
+                    onChange={(e) =>
+                      updateDraft({
+                        details: { ...draft.details, size: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="detailsShelfLife">Shelf Life</Label>
+                  <Input
+                    id="detailsShelfLife"
+                    placeholder="24 months"
+                    value={draft.details.shelfLife}
+                    onChange={(e) =>
+                      updateDraft({
+                        details: { ...draft.details, shelfLife: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="detailsClaims">Claims (comma separated)</Label>
+                  <Input
+                    id="detailsClaims"
+                    placeholder="Vegan, Cruelty-Free"
+                    value={draft.details.claims.join(", ")}
+                    onChange={(e) =>
+                      updateDraft({
+                        details: {
+                          ...draft.details,
+                          claims: e.target.value.split(",").map((f) => f.trim()),
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Images</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add image URL"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addImageUrl();
+                      }
+                    }}
+                  />
+                  <Button onClick={addImageUrl} variant="outline" size="sm">
+                    Add
+                  </Button>
+                </div>
+                {draft.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {draft.images.map((url, i) => (
+                      <div key={i} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Product image ${i + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => removeImage(url)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label={`Remove image ${i + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags & Badges</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add tag"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addTag())
+                      }
+                    />
+                    <Button onClick={addTag} variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </div>
+                  {draft.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {draft.tags.map((tag, i) => (
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          {tag}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => removeTag(tag)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Badges</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add badge (e.g., Bestseller, New, Sale)"
+                      value={newBadge}
+                      onChange={(e) => setNewBadge(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addBadge())
+                      }
+                    />
+                    <Button onClick={addBadge} variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </div>
+                  {draft.badges.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {draft.badges.map((badge, i) => (
+                        <Badge
+                          key={i}
+                          className="flex items-center gap-1"
+                        >
+                          {badge}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => removeBadge(badge)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full"
+              size="lg"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting to n8n...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit to n8n
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Preview */}
-          <div>
+          <div className="overflow-y-auto max-h-[80vh]">
             <Card>
               <CardHeader>
                 <CardTitle>Live Preview</CardTitle>
