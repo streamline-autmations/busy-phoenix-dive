@@ -50,6 +50,8 @@ interface FurnitureDraft {
   careInstructions?: string;
 }
 
+const PLACEHOLDER_IMAGE = "https://via.placeholder.com/400x300?text=No+Image";
+
 export default function NewFurniturePage() {
   const [draft, setDraft] = useState<FurnitureDraft>({
     title: '',
@@ -160,6 +162,15 @@ export default function NewFurniturePage() {
     }
   }, [draft]);
 
+  // Ensure images array always has at least one valid URL
+  const imagesForPreview = draft.images && draft.images.length > 0
+    ? draft.images.filter((url) => url && url.trim() !== "")
+    : [];
+
+  if (imagesForPreview.length === 0) {
+    imagesForPreview.push(PLACEHOLDER_IMAGE);
+  }
+
   // Create preview data for the templates
   const previewFurniture = {
     id: 'preview',
@@ -167,8 +178,8 @@ export default function NewFurniturePage() {
     price: draft.price || 999,
     originalPrice: draft.originalPrice,
     currency: draft.currency,
-    image: draft.thumbnail || draft.images?.[0] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
-    images: draft.images?.length ? draft.images : undefined,
+    image: draft.thumbnail && draft.thumbnail.trim() !== "" ? draft.thumbnail : imagesForPreview[0],
+    images: imagesForPreview,
     dimensions: draft.dimensions,
     material: draft.material,
     finish: draft.finish,

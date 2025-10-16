@@ -8,6 +8,8 @@ import type { NormalProductDetailPageProps } from "@/components/NormalProductDet
 import { Button } from "@/components/ui/button";
 import { Maximize, Minimize } from "lucide-react";
 
+const PLACEHOLDER_IMAGE = "/placeholder.svg";
+
 export default function AddProductPage() {
   const [draft, setDraft] = useState<FullProductFormValue>({
     id: "preview",
@@ -71,6 +73,15 @@ export default function AddProductPage() {
     }
   }
 
+  // Ensure images array always has at least one valid URL
+  const imagesForPreview = draft.images.length > 0
+    ? draft.images.filter((url) => url && url.trim() !== "")
+    : [];
+
+  if (imagesForPreview.length === 0) {
+    imagesForPreview.push(PLACEHOLDER_IMAGE);
+  }
+
   // Map draft to ProductCardProps
   const productCardData: ProductCardProps = {
     id: draft.id,
@@ -80,10 +91,7 @@ export default function AddProductPage() {
     compareAtPrice: draft.compareAtPrice,
     shortDescription: draft.shortDescription,
     inStock: draft.inStock,
-    images:
-      draft.images.length > 0
-        ? draft.images
-        : ["/placeholder.svg", "/placeholder.svg"],
+    images: imagesForPreview,
     badges: draft.badges,
   };
 
@@ -98,10 +106,7 @@ export default function AddProductPage() {
     price: draft.price,
     compareAtPrice: draft.compareAtPrice,
     stock: draft.inStock ? "In Stock" : "Out of Stock",
-    images:
-      draft.images.length > 0
-        ? draft.images
-        : ["/placeholder.svg", "/placeholder.svg"],
+    images: imagesForPreview,
     features: draft.features,
     howToUse: draft.howToUse,
     ingredients: {
