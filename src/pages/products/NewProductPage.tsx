@@ -6,8 +6,38 @@ import { slugify } from "@/lib/slugify";
 import type { ProductCardProps } from "@/components/ProductCard";
 import type { NormalProductDetailPageProps } from "@/components/NormalProductDetailPage";
 
-export function NewProductPage() {
-  const [draft, setDraft] = useState({
+// Define ProductFormValue type locally to match ProductForm's expected value shape
+type ProductFormValue = {
+  title?: string;
+  slug?: string;
+  price?: number;
+  currency?: string;
+  status?: string;
+  thumbnailId?: string;
+  imageIds?: string[];
+  tags?: string[];
+  badges?: string[];
+  shortDescription?: string;
+  overview?: string;
+  features?: string[];
+  howToUse?: string[];
+  ingredients?: {
+    inci?: string[];
+    key?: string[];
+  };
+  details?: {
+    size?: string;
+    shelfLife?: string;
+    claims?: string[];
+  };
+  category?: string;
+  variants?: { name: string; image: string }[];
+  rating?: number;
+  reviewCount?: number;
+};
+
+export default function NewProductPage() {
+  const [draft, setDraft] = useState<ProductFormValue>({
     title: "",
     slug: "",
     price: 0,
@@ -29,8 +59,8 @@ export function NewProductPage() {
     reviewCount: 0,
   });
 
-  const onChange = (updates: Partial<typeof draft>) => {
-    setDraft((prev: typeof draft) => ({ ...prev, ...updates }));
+  const onChange = (updates: Partial<ProductFormValue>) => {
+    setDraft((prev) => ({ ...prev, ...updates }));
   };
 
   const onSave = () => {
@@ -50,7 +80,7 @@ export function NewProductPage() {
     shortDescription: draft.shortDescription || "",
     inStock: true,
     images:
-      draft.imageIds.length > 0
+      draft.imageIds && draft.imageIds.length > 0
         ? draft.imageIds.map(
             (id) =>
               `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_800/${id}.webp`
@@ -70,14 +100,14 @@ export function NewProductPage() {
     compareAtPrice: null,
     stock: "In Stock",
     images:
-      draft.imageIds.length > 0
+      draft.imageIds && draft.imageIds.length > 0
         ? draft.imageIds.map(
             (id) =>
               `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_1400/${id}.webp`
           )
         : ["/placeholder.svg"],
-    features: draft.features.length > 0 ? draft.features : [],
-    howToUse: draft.howToUse.length > 0 ? draft.howToUse : [],
+    features: draft.features || [],
+    howToUse: draft.howToUse || [],
     ingredients: draft.ingredients || { inci: [], key: [] },
     details: draft.details || { size: "", shelfLife: "", claims: [] },
     variants: draft.variants || [],
