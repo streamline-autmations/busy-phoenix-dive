@@ -28,6 +28,11 @@ export default function NewProductPage() {
     reviewCount: 0,
   });
 
+  // Wrap setDraft to accept partial updates and merge with current state
+  function handleDraftChange(updates: Partial<FullProductFormValue>) {
+    setDraft((prev) => ({ ...prev, ...updates }));
+  }
+
   // Map draft to ProductCardProps
   const productCardData: ProductCardProps = {
     id: draft.id,
@@ -81,7 +86,7 @@ export default function NewProductPage() {
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Add New Product</h1>
         <div className="grid lg:grid-cols-2 gap-8">
-          <FullProductForm value={draft} onChange={setDraft} />
+          <FullProductForm value={draft} onChange={handleDraftChange} />
           <ProductPreview productCardData={productCardData} productDetailData={productDetailData} />
         </div>
       </div>
