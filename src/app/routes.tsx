@@ -59,16 +59,16 @@ function HomePage() {
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="mt-8 text-sm text-gray-500">
-            <p>Legacy admin available at:</p>
-            <div className="space-x-4 mt-2">
-              <a href="/admin/products/new" className="text-blue-600 hover:text-blue-800 underline">
-                Legacy Add Product
-              </a>
-              <span>•</span>
-              <span>Edit: <code>/admin/products/your-slug/edit</code></span>
+            
+            <div className="mt-8 text-sm text-gray-500">
+              <p>Legacy admin available at:</p>
+              <div className="space-x-4 mt-2">
+                <a href="/admin/products/new" className="text-blue-600 hover:text-blue-800 underline">
+                  Legacy Add Product
+                </a>
+                <span>•</span>
+                <span>Edit: <code>/admin/products/your-slug/edit</code></span>
+              </div>
             </div>
           </div>
         </div>
