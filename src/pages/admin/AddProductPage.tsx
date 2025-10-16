@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
-import { FullProductForm, FullProductFormValue } from "@/components/FullProductForm";
+import ProductFurnitureForm, { ProductFurnitureFormValue } from "@/components/ProductFurnitureForm";
 import ProductPreview from "@/components/ProductPreview";
 import { slugify } from "@/lib/slugify";
 import type { ProductCardProps } from "@/components/ProductCard";
@@ -11,7 +11,7 @@ import { Maximize, Minimize } from "lucide-react";
 const PLACEHOLDER_IMAGE = "/placeholder.svg";
 
 export default function AddProductPage() {
-  const [draft, setDraft] = useState<FullProductFormValue>({
+  const [draft, setDraft] = useState<ProductFurnitureFormValue>({
     id: "preview",
     name: "",
     slug: "",
@@ -30,11 +30,12 @@ export default function AddProductPage() {
     details: { size: "", shelfLife: "", claims: [] },
     rating: 0,
     reviewCount: 0,
+    isFurniture: false,
   });
 
-  const [previewFullscreen, setPreviewFullscreen] = useState(false);
+  const [previewFullscreen, setPreviewFullscreen] = React.useState(false);
 
-  function handleDraftChange(updates: Partial<FullProductFormValue>) {
+  function handleDraftChange(updates: Partial<ProductFurnitureFormValue>) {
     setDraft((prev) => ({ ...prev, ...updates }));
   }
 
@@ -131,7 +132,7 @@ export default function AddProductPage() {
         <div className="flex flex-col lg:flex-row gap-8 flex-1">
           {/* Form */}
           <div className="flex-1 max-w-full lg:max-w-lg overflow-auto">
-            <FullProductForm
+            <ProductFurnitureForm
               value={draft}
               onChange={handleDraftChange}
               onSave={handleSave}
