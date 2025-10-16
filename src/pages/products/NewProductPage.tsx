@@ -6,7 +6,7 @@ import { slugify } from "@/lib/slugify";
 import type { ProductCardProps } from "@/components/ProductCard";
 import type { NormalProductDetailPageProps } from "@/components/NormalProductDetailPage";
 
-// Define ProductFormValue type locally to match ProductForm's expected value shape
+// Define ProductFormValue type locally
 type ProductFormValue = {
   title?: string;
   slug?: string;
@@ -60,7 +60,7 @@ export default function NewProductPage() {
   });
 
   const onChange = (updates: Partial<ProductFormValue>) => {
-    setDraft((prev) => ({ ...prev, ...updates }));
+    setDraft((prev: ProductFormValue) => ({ ...prev, ...updates }));
   };
 
   const onSave = () => {
@@ -82,7 +82,7 @@ export default function NewProductPage() {
     images:
       draft.imageIds && draft.imageIds.length > 0
         ? draft.imageIds.map(
-            (id) =>
+            (id: string) =>
               `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_800/${id}.webp`
           )
         : ["/placeholder.svg"],
@@ -102,14 +102,21 @@ export default function NewProductPage() {
     images:
       draft.imageIds && draft.imageIds.length > 0
         ? draft.imageIds.map(
-            (id) =>
+            (id: string) =>
               `https://res.cloudinary.com/dd89enrjz/image/upload/f_webp,q_auto:good,w_1400/${id}.webp`
           )
         : ["/placeholder.svg"],
     features: draft.features || [],
     howToUse: draft.howToUse || [],
-    ingredients: draft.ingredients || { inci: [], key: [] },
-    details: draft.details || { size: "", shelfLife: "", claims: [] },
+    ingredients: {
+      inci: draft.ingredients?.inci || [],
+      key: draft.ingredients?.key || [],
+    },
+    details: {
+      size: draft.details?.size || "",
+      shelfLife: draft.details?.shelfLife || "",
+      claims: draft.details?.claims || [],
+    },
     variants: draft.variants || [],
     rating: draft.rating || 4.5,
     reviewCount: draft.reviewCount || 128,
