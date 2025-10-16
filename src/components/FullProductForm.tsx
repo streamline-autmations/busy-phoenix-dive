@@ -7,67 +7,46 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import ProductMediaInput from "./ProductMediaInput";
 
+export interface IngredientGroup {
+  inci: string[];
+  key: string[];
+}
+
+export interface ProductDetails {
+  size: string;
+  shelfLife: string;
+  claims: string[];
+}
+
+export interface Variant {
+  name: string;
+  image: string;
+}
+
+export interface FullProductFormValue {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  compareAtPrice: number | null;
+  shortDescription: string;
+  inStock: boolean;
+  images: string[]; // at least 2 images: [white bg, colorful]
+  badges: string[];
+  variants: Variant[];
+  category: string;
+  overview: string;
+  features: string[];
+  howToUse: string[];
+  ingredients: IngredientGroup;
+  details: ProductDetails;
+  rating: number;
+  reviewCount: number;
+}
+
 interface FullProductFormProps {
   value: FullProductFormValue;
   onChange: (updates: Partial<FullProductFormValue>) => void;
 }
 
-export default function FullProductForm({ value, onChange }: FullProductFormProps) {
-  // ... your existing form code ...
-
-  // Helper component for editing arrays of strings
-  function ArrayInput({
-    label,
-    values,
-    onChange,
-  }: {
-    label: string;
-    values: string[];
-    onChange: (newValues: string[]) => void;
-  }) {
-    const [newValue, setNewValue] = useState("");
-
-    function add() {
-      if (newValue.trim()) {
-        onChange([...values, newValue.trim()]);
-        setNewValue("");
-      }
-    }
-
-    function remove(index: number) {
-      onChange(values.filter((_, i) => i !== index));
-    }
-
-    return (
-      <div className="mb-4">
-        <Label>{label}</Label>
-        {values.map((val, i) => (
-          <div key={i} className="flex items-center gap-2 mb-1">
-            <Input
-              value={val}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const copy = [...values];
-                copy[i] = e.target.value;
-                onChange(copy);
-              }}
-            />
-            <Button variant="destructive" size="icon" onClick={() => remove(i)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <div className="flex gap-2">
-          <Input
-            placeholder={`Add ${label.toLowerCase()}`}
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
-          />
-          <Button onClick={add}>Add</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ... rest of your form JSX unchanged ...
-}
+// ... rest of your FullProductForm component code unchanged ...
