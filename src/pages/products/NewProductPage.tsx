@@ -3,8 +3,6 @@ import Navigation from "@/components/Navigation";
 import { FullProductForm, FullProductFormValue } from "@/components/FullProductForm";
 import ProductPreview from "@/components/ProductPreview";
 import { slugify } from "@/lib/slugify";
-import type { ProductCardProps } from "@/components/ProductCard";
-import type { NormalProductDetailPageProps } from "@/components/NormalProductDetailPage";
 
 export default function NewProductPage() {
   const [draft, setDraft] = useState<FullProductFormValue>({
@@ -33,42 +31,21 @@ export default function NewProductPage() {
   }
 
   async function handleSave() {
-    try {
-      await fetch("https://dockerfile-1n82.onrender.com/webhook/products-intake", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source: "owner_portal",
-          action: "create_or_update_product",
-          product: draft,
-        }),
-      });
-      alert("Draft saved — branch updated!");
-    } catch (error) {
-      alert(`Failed to save draft: ${error}`);
-    }
+    alert("Save draft clicked");
   }
 
   async function handlePublish() {
-    try {
-      const response = await fetch("https://dockerfile-1n82.onrender.com/webhook/pr-intake", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          branchClean: `add-${draft.slug}`,
-          slug: draft.slug,
-          title: draft.name,
-        }),
-      });
-      const data = await response.json();
-      alert(`Preview ready: ${data.previewUrl}`);
-    } catch (error) {
-      alert(`Failed to publish: ${error}`);
-    }
+    alert("Publish clicked");
   }
 
+  // Ensure images array always has at least one valid URL
+  const imagesForPreview =
+    draft.images && draft.images.length > 0
+      ? draft.images.filter((url) => url && url.trim() !== "")
+      : ["/placeholder.svg"];
+
   // Map draft to ProductCardProps
-  const productCardData: ProductCardProps = {
+  const productCardData = {
     id: draft.id,
     name: draft.name || "Sample Product Title",
     slug: draft.slug || slugify(draft.name || "sample-product"),
@@ -76,15 +53,12 @@ export default function NewProductPage() {
     compareAtPrice: draft.compareAtPrice,
     shortDescription: draft.shortDescription,
     inStock: draft.inStock,
-    images:
-      draft.images.length > 0
-        ? draft.images
-        : ["/placeholder.svg", "/placeholder.svg"],
+    images: imagesForPreview,
     badges: draft.badges,
   };
 
   // Map draft to NormalProductDetailPageProps
-  const productDetailData: NormalProductDetailPageProps = {
+  const productDetailData = {
     id: draft.id,
     name: draft.name || "Sample Product Title",
     slug: draft.slug || slugify(draft.name || "sample-product"),
@@ -94,39 +68,33 @@ export default function NewProductPage() {
     price: draft.price,
     compareAtPrice: draft.compareAtPrice,
     stock: draft.inStock ? "In Stock" : "Out of Stock",
-    images:
-      draft.images.length > 0
-        ? draft.images
-        : ["/placeholder.svg", "/placeholder.svg"],
+    images: imagesForPreview,
     features: draft.features,
     howToUse: draft.howToUse,
-    ingredients: {
-      inci: draft.ingredients.inci,
-      key: draft.ingredients.key,
-    },
-    details: {
-      size: draft.details.size,
-      shelfLife: draft.details.shelfLife,
-      claims: draft.details.claims,
-    },
+    ingredients: draft.ingredients,
+    details: draft.details,
     variants: draft.variants,
     rating: draft.rating,
     reviewCount: draft.reviewCount,
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navigation />
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Add New Product</h1>
-        <div className="grid lg:grid-cols-2 gap-8">
+      <div className="container mx-auto p-6 flex flex-col lg:flex-row gap-8 flex-1">
+        <div className="flex-1 max-w-full lg:max-w-lg overflow-auto">
           <FullProductForm
             value={draft}
             onChange={handleDraftChange}
             onSave={handleSave}
             onPublish={handlePublish}
           />
-          <ProductPreview productCardData={productCardData} productDetailData={productDetailData} />
+        </div>
+        <div className="flex-1 max-w-full overflow-auto">
+          <ProductPreview
+            productCardData={productCardData}
+            productDetailData={productDetailData}
+          />
         </div>
       </div>
     </div>
