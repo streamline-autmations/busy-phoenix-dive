@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import ProductMediaInput from "./ProductMediaInput";
@@ -57,7 +63,7 @@ export interface ProductFurnitureFormValue {
   weight?: number;
   material?: string;
   finish?: string;
-  assembly?: 'required' | 'not_required' | 'partial';
+  assembly?: "required" | "not_required" | "partial";
   deliveryTime?: string;
   warranty?: string;
   careInstructions?: string;
@@ -239,11 +245,16 @@ export default function ProductFurnitureForm({
           value={value.category}
           onValueChange={(val) => patch({ category: val })}
         >
-          {categories.map((cat) => (
-            <SelectItem key={cat} value={cat}>
-              {cat}
-            </SelectItem>
-          ))}
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -264,12 +275,145 @@ export default function ProductFurnitureForm({
         </Button>
       </div>
 
-      {/* ... rest of the form unchanged ... */}
-
       {/* Furniture-specific fields */}
       {value.isFurniture && (
         <>
-          {/* ... existing furniture-specific inputs ... */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU</Label>
+              <Input
+                id="sku"
+                value={value.sku || ""}
+                onChange={(e) => patch({ sku: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Dimensions (cm)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Width"
+                  value={value.dimensions?.width || ""}
+                  onChange={(e) =>
+                    patch({
+                      dimensions: {
+                        ...value.dimensions,
+                        width: Number(e.target.value),
+                        height: value.dimensions?.height || 0,
+                        depth: value.dimensions?.depth || 0,
+                        unit: "cm",
+                      },
+                    })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="Height"
+                  value={value.dimensions?.height || ""}
+                  onChange={(e) =>
+                    patch({
+                      dimensions: {
+                        ...value.dimensions,
+                        width: value.dimensions?.width || 0,
+                        height: Number(e.target.value),
+                        depth: value.dimensions?.depth || 0,
+                        unit: "cm",
+                      },
+                    })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="Depth"
+                  value={value.dimensions?.depth || ""}
+                  onChange={(e) =>
+                    patch({
+                      dimensions: {
+                        ...value.dimensions,
+                        width: value.dimensions?.width || 0,
+                        height: value.dimensions?.height || 0,
+                        depth: Number(e.target.value),
+                        unit: "cm",
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="weight">Weight (kg)</Label>
+              <Input
+                id="weight"
+                type="number"
+                value={value.weight || ""}
+                onChange={(e) => patch({ weight: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="material">Material</Label>
+              <Input
+                id="material"
+                value={value.material || ""}
+                onChange={(e) => patch({ material: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="finish">Finish</Label>
+              <Input
+                id="finish"
+                value={value.finish || ""}
+                onChange={(e) => patch({ finish: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assembly">Assembly</Label>
+            <Select
+              value={value.assembly || ""}
+              onValueChange={(val) => patch({ assembly: val as ProductFurnitureFormValue["assembly"] })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select assembly option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="not_required">Not Required</SelectItem>
+                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="required">Required</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="deliveryTime">Delivery Time</Label>
+            <Input
+              id="deliveryTime"
+              value={value.deliveryTime || ""}
+              onChange={(e) => patch({ deliveryTime: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="warranty">Warranty</Label>
+            <Input
+              id="warranty"
+              value={value.warranty || ""}
+              onChange={(e) => patch({ warranty: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="careInstructions">Care Instructions (HTML allowed)</Label>
+            <Textarea
+              id="careInstructions"
+              rows={4}
+              value={value.careInstructions || ""}
+              onChange={(e) => patch({ careInstructions: e.target.value })}
+            />
+          </div>
         </>
       )}
 
@@ -277,10 +421,23 @@ export default function ProductFurnitureForm({
 
       {/* Save and Publish buttons */}
       <div className="flex gap-2 pt-4 border-t">
-        <Button onClick={(e) => { e.preventDefault(); onSave && onSave(); }} variant="outline" className="flex-1">
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            onSave && onSave();
+          }}
+          variant="outline"
+          className="flex-1"
+        >
           💾 Save Draft
         </Button>
-        <Button onClick={(e) => { e.preventDefault(); onPublish && onPublish(); }} className="flex-1">
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            onPublish && onPublish();
+          }}
+          className="flex-1"
+        >
           🚀 Publish
         </Button>
       </div>
