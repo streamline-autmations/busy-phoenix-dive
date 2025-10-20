@@ -222,11 +222,6 @@ export default function BundleBuilder() {
     seo: formValues.seo,
     createdAt: formValues.createdAt,
     updatedAt: formValues.updatedAt,
-    id: formValues.id,
-    name: formValues.name,
-    price: formValues.price,
-    compareAtPrice: formValues.compareAtPrice,
-    includedProducts: formValues.includedProducts,
   };
 
   return (
