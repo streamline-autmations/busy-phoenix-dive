@@ -4,6 +4,7 @@ import EditProductPage from "@/pages/admin/EditProductPage";
 import NewProductPage from "@/pages/products/NewProductPage";
 import NewFurniturePage from "@/pages/furniture/NewFurniturePage";
 import NewBundlePage from "@/pages/bundles/NewBundlePage";
+import OwnerPortal from "@/pages/admin/OwnerPortal";
 import Navigation from "@/components/Navigation";
 
 function HomePage() {
@@ -22,4 +23,5 @@ export const router = createBrowserRouter([
   { path: "/bundles/new", element: <NewBundlePage /> },
   { path: "/admin/products/new", element: <AddProductPage /> },
   { path: "/admin/products/:slug/edit", element: <EditProductPage /> },
+  { path: "/admin/owner-portal", element: <OwnerPortal /> },
 ]);

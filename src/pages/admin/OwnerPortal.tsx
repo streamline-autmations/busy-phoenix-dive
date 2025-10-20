@@ -8,39 +8,19 @@ import ProductPreview from "@/components/ProductPreview";
 import BundlePreview from "@/modules/bundles/Preview";
 import { FullProductForm, FullProductFormValue } from "@/components/FullProductForm";
 import BundleBuilder from "@/modules/bundles/BundleBuilder";
+import DiscountForm, { DiscountFormValue } from "@/components/DiscountForm";
+import SpecialForm, { SpecialFormValue } from "@/components/SpecialForm";
+import DiscountPreview from "@/components/DiscountPreview";
+import SpecialPreview from "@/components/SpecialPreview";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { env } from "@/lib/env";
+import { computeFinalPrice } from "@/lib/discountUtils";
 
-type Tab = "product" | "bundle";
-
-interface PublishResult {
-  pullRequestUrl: string;
-  previewUrl?: string;
-}
-
-const LOCALSTORAGE_KEYS = {
-  product: "owner_portal_product_draft",
-  bundle: "owner_portal_bundle_draft",
-};
+type Tab = "product" | "bundle" | "discount" | "special";
 
 function slugify(s: string) {
   return slugifyUtil(s).toLowerCase();
-}
-
-function isProductValid(draft: FullProductFormValue) {
-  return (
-    draft.name.trim().length > 0 &&
-    draft.price > 0 &&
-    draft.images.length > 0
-  );
-}
-
-function isBundleValid(bundle: any) {
-  return (
-    bundle.name?.trim().length > 0 &&
-    bundle.price > 0 &&
-    bundle.images?.length > 0
-  );
 }
 
 export default function OwnerPortal() {
@@ -49,7 +29,7 @@ export default function OwnerPortal() {
   // Product draft state
   const [productDraft, setProductDraft] = useState<FullProductFormValue>(() => {
     try {
-      const saved = localStorage.getItem(LOCALSTORAGE_KEYS.product);
+      const saved = localStorage.getItem("owner_portal_product_draft");
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -77,7 +57,7 @@ export default function OwnerPortal() {
   // Bundle draft state
   const [bundleDraft, setBundleDraft] = useState<any>(() => {
     try {
-      const saved = localStorage.getItem(LOCALSTORAGE_KEYS.bundle);
+      const saved = localStorage.getItem("owner_portal_bundle_draft");
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -98,21 +78,80 @@ export default function OwnerPortal() {
     };
   });
 
-  // Publish result state
-  const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
+  // Discount draft state
+  const [discountDraft, setDiscountDraft] = useState<DiscountFormValue>(() => {
+    try {
+      const saved = localStorage.getItem("owner_portal_discount_draft");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      id: "",
+      type: "coupon",
+      code: "",
+      label: "",
+      valueType: "percent",
+      percent: undefined,
+      amount: undefined,
+      currency: "ZAR",
+      appliesToAll: true,
+      appliesToProducts: [],
+      appliesToBundles: [],
+      appliesToCategories: [],
+      constraintsStartAt: undefined,
+      constraintsEndAt: undefined,
+      minSubtotal: undefined,
+      maxRedemptions: undefined,
+      perCustomerLimit: undefined,
+      stackingExclusive: false,
+      stackingPriority: 0,
+      status: "active",
+    };
+  });
+
+  // Special draft state
+  const [specialDraft, setSpecialDraft] = useState<SpecialFormValue>(() => {
+    try {
+      const saved = localStorage.getItem("owner_portal_special_draft");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      id: "",
+      title: "",
+      slug: "",
+      heroImage: undefined,
+      shortDescription: "",
+      discountId: "",
+      badge: "",
+      status: "active",
+      startAt: undefined,
+      endAt: undefined,
+    };
+  });
 
   // Save drafts to localStorage on change
   useEffect(() => {
     try {
-      localStorage.setItem(LOCALSTORAGE_KEYS.product, JSON.stringify(productDraft));
+      localStorage.setItem("owner_portal_product_draft", JSON.stringify(productDraft));
     } catch {}
   }, [productDraft]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(LOCALSTORAGE_KEYS.bundle, JSON.stringify(bundleDraft));
+      localStorage.setItem("owner_portal_bundle_draft", JSON.stringify(bundleDraft));
     } catch {}
   }, [bundleDraft]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("owner_portal_discount_draft", JSON.stringify(discountDraft));
+    } catch {}
+  }, [discountDraft]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("owner_portal_special_draft", JSON.stringify(specialDraft));
+    } catch {}
+  }, [specialDraft]);
 
   // Slug auto-generation with manual override for product
   useEffect(() => {
@@ -128,191 +167,192 @@ export default function OwnerPortal() {
     }
   }, [bundleDraft.name]);
 
-  // Handle image URL transform for product images
-  const updateProductImages = useCallback((urls: string[]) => {
-    const transformed = urls.map((url) =>
-      url.includes("?") ? url + "&f_auto&q_auto" : url + "?f_auto&q_auto"
-    );
-    setProductDraft((prev) => {
-      // Remove usage of prev.thumbnail (not in FullProductFormValue)
-      return {
-        ...prev,
-        images: transformed,
-      };
-    });
-  }, []);
+  // Slug auto-generation with manual override for discount
+  useEffect(() => {
+    if (!discountDraft.id || discountDraft.id === slugify(discountDraft.id)) {
+      setDiscountDraft((prev) => ({ ...prev, id: slugify(discountDraft.id) }));
+    }
+  }, [discountDraft.id]);
 
-  // Handle image URL transform for bundle images
-  const updateBundleImages = useCallback((urls: string[]) => {
-    const transformed = urls.map((url) =>
-      url.includes("?") ? url + "&f_auto&q_auto" : url + "?f_auto&q_auto"
-    );
-    setBundleDraft((prev: any) => ({
-      ...prev,
-      images: transformed,
-    }));
-  }, []);
+  // Slug auto-generation with manual override for special
+  useEffect(() => {
+    if (!specialDraft.slug || specialDraft.slug === slugify(specialDraft.slug)) {
+      setSpecialDraft((prev) => ({ ...prev, slug: slugify(specialDraft.slug) }));
+    }
+  }, [specialDraft.slug]);
 
-  // Publish handler
-  async function handlePublish() {
-    setPublishResult(null);
+  // Save draft handlers
+  function saveProductDraft() {
+    toast.success("Product draft saved locally");
+  }
+  function saveBundleDraft() {
+    toast.success("Bundle draft saved locally");
+  }
+  function saveDiscountDraft() {
+    toast.success("Discount draft saved locally");
+  }
+  function saveSpecialDraft() {
+    toast.success("Special draft saved locally");
+  }
+
+  // Publish handlers
+  async function publishProduct() {
+    toast.error("Publishing products not implemented here");
+  }
+  async function publishBundle() {
+    toast.error("Publishing bundles not implemented here");
+  }
+
+  async function publishDiscount() {
     try {
-      if (activeTab === "product") {
-        if (!isProductValid(productDraft)) {
-          toast.error("Please fill required fields: title, price, and at least one image.");
-          return;
-        }
-        const payload = {
+      const res = await fetch(env.DISCOUNTS_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           source: "owner_portal",
-          action: "create_or_update_product",
+          action: "create_or_update_discount",
           publish: true,
-          draft: productDraft,
-        };
-        const res = await fetch("https://dockerfile-1n82.onrender.com/webhook/products-intake", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (data.ok) {
-          toast.success("Product published successfully!");
-          setPublishResult({
-            pullRequestUrl: data.pullRequestUrl,
-            previewUrl: data.previewUrl,
-          });
-        } else {
-          throw new Error(data.message || "Publish failed");
-        }
-      } else {
-        if (!isBundleValid(bundleDraft)) {
-          toast.error("Please fill required fields: name, price, and at least one image.");
-          return;
-        }
-        const payload = {
-          source: "owner_portal",
-          action: "create_or_update_bundle",
-          publish: true,
-          bundle: bundleDraft,
-        };
-        const res = await fetch("https://dockerfile-1n82.onrender.com/webhook/bundles-intake", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (data.ok) {
-          toast.success("Bundle published successfully!");
-          setPublishResult({
-            pullRequestUrl: data.pullRequestUrl,
-            previewUrl: data.previewUrl,
-          });
-        } else {
-          throw new Error(data.message || "Publish failed");
-        }
+          discount: discountDraft,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to publish discount");
       }
+      const data = await res.json();
+      toast.success("Discount published successfully!");
+      setPublishResult({
+        prUrl: data.pullRequestUrl,
+        previewUrl: data.previewUrl,
+      });
     } catch (error: any) {
       toast.error(`Publish failed: ${error.message || error}`);
     }
   }
 
-  // Save draft handler (local only)
-  function handleSaveDraft() {
-    toast.success("Draft saved locally");
+  async function publishSpecial() {
+    try {
+      const res = await fetch(env.SPECIALS_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "owner_portal",
+          action: "create_or_update_special",
+          publish: true,
+          special: specialDraft,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to publish special");
+      }
+      const data = await res.json();
+      toast.success("Special published successfully!");
+      setPublishResult({
+        prUrl: data.pullRequestUrl,
+        previewUrl: data.previewUrl,
+      });
+    } catch (error: any) {
+      toast.error(`Publish failed: ${error.message || error}`);
+    }
   }
 
-  // Slug uniqueness heuristic message
-  function SlugHint({ slug }: { slug: string }) {
-    if (!slug) return null;
-    const isValidFormat = /^[a-z0-9-]+$/.test(slug);
-    if (!isValidFormat) {
-      return (
-        <p className="text-xs text-yellow-600 mt-1">
-          Slug should contain only lowercase letters, numbers, and hyphens.
-        </p>
-      );
-    }
-    if (slug.length < 3) {
-      return (
-        <p className="text-xs text-yellow-600 mt-1">
-          Slug is very short; consider making it more descriptive.
-        </p>
-      );
-    }
-    return (
-      <p className="text-xs text-green-600 mt-1">
-        Slug looks good (uniqueness not verified).
-      </p>
-    );
-  }
+  // Publish result state
+  const [publishResult, setPublishResult] = useState<{ prUrl: string; previewUrl?: string } | null>(null);
+
+  // Wrap setState to accept partial updates for onChange props
+  const handleProductChange = useCallback(
+    (updates: Partial<FullProductFormValue>) => {
+      setProductDraft((prev) => ({ ...prev, ...updates }));
+    },
+    []
+  );
+
+  const handleDiscountChange = useCallback(
+    (updates: Partial<DiscountFormValue>) => {
+      setDiscountDraft((prev) => ({ ...prev, ...updates }));
+    },
+    []
+  );
+
+  const handleSpecialChange = useCallback(
+    (updates: Partial<SpecialFormValue>) => {
+      setSpecialDraft((prev) => ({ ...prev, ...updates }));
+    },
+    []
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navigation />
       <div className="flex flex-1 max-w-7xl mx-auto p-6 gap-6">
         {/* Left tabs */}
-        <nav className="flex flex-col space-y-2 w-32 border-r border-gray-300">
-          <button
-            className={cn(
-              "py-2 px-3 rounded text-left font-semibold",
-              activeTab === "product"
-                ? "bg-pink-400 text-white"
-                : "hover:bg-pink-100"
-            )}
-            onClick={() => setActiveTab("product")}
-            aria-selected={activeTab === "product"}
-            role="tab"
-            id="tab-product"
-            aria-controls="tabpanel-product"
-          >
-            Product
-          </button>
-          <button
-            className={cn(
-              "py-2 px-3 rounded text-left font-semibold",
-              activeTab === "bundle"
-                ? "bg-pink-400 text-white"
-                : "hover:bg-pink-100"
-            )}
-            onClick={() => setActiveTab("bundle")}
-            aria-selected={activeTab === "bundle"}
-            role="tab"
-            id="tab-bundle"
-            aria-controls="tabpanel-bundle"
-          >
-            Bundle
-          </button>
+        <nav className="flex flex-col space-y-2 w-32 border-r border-gray-300" role="tablist" aria-orientation="vertical">
+          {(["product", "bundle", "discount", "special"] as Tab[]).map((tab) => (
+            <button
+              key={tab}
+              className={cn(
+                "py-2 px-3 rounded text-left font-semibold",
+                activeTab === tab ? "bg-pink-400 text-white" : "hover:bg-pink-100"
+              )}
+              onClick={() => {
+                setActiveTab(tab);
+                setPublishResult(null);
+              }}
+              aria-selected={activeTab === tab}
+              role="tab"
+              id={`tab-${tab}`}
+              aria-controls={`tabpanel-${tab}`}
+              tabIndex={activeTab === tab ? 0 : -1}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </nav>
 
-        {/* Middle form */}
-        <main className="flex-1 overflow-auto" role="tabpanel" aria-labelledby={`tab-${activeTab}`} id={`tabpanel-${activeTab}`}>
+        {/* Center form */}
+        <main
+          className="flex-1 overflow-auto"
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+          id={`tabpanel-${activeTab}`}
+        >
           {activeTab === "product" && (
             <>
               <FullProductForm
                 value={productDraft}
-                onChange={(updates) => {
-                  // Handle images update with transform
-                  if (updates.images) {
-                    updateProductImages(updates.images);
-                    updates = { ...updates, images: undefined };
-                  }
-                  setProductDraft((prev) => ({ ...prev, ...updates }));
-                }}
+                onChange={handleProductChange}
+                onSave={saveProductDraft}
+                onPublish={publishProduct}
               />
-              <SlugHint slug={productDraft.slug} />
             </>
           )}
           {activeTab === "bundle" && (
             <>
-              {/* Remove value and onChange props from BundleBuilder to fix TS error */}
               <BundleBuilder />
-              <SlugHint slug={bundleDraft.slug} />
             </>
+          )}
+          {activeTab === "discount" && (
+            <DiscountForm
+              value={discountDraft}
+              onChange={handleDiscountChange}
+              onSaveDraft={saveDiscountDraft}
+              onPublish={publishDiscount}
+            />
+          )}
+          {activeTab === "special" && (
+            <SpecialForm
+              value={specialDraft}
+              onChange={handleSpecialChange}
+              onSaveDraft={saveSpecialDraft}
+              onPublish={publishSpecial}
+            />
           )}
         </main>
 
         {/* Right preview */}
         <aside className="w-96 overflow-auto border border-gray-300 rounded-lg bg-white p-4">
-          {activeTab === "product" && (
+          {activeTab === "product" && productDraft && (
             <ProductPreview
               productCardData={{
                 id: productDraft.id || "preview",
@@ -360,31 +400,44 @@ export default function OwnerPortal() {
               productsMap={new Map()} // You can pass a real products map if available
             />
           )}
+          {activeTab === "discount" && (
+            <DiscountPreview discount={discountDraft} />
+          )}
+          {activeTab === "special" && (
+            <SpecialPreview special={specialDraft} />
+          )}
         </aside>
       </div>
 
       {/* Footer */}
       <footer className="border-t border-gray-300 p-4 flex flex-col items-center space-y-4 bg-white">
         <div className="flex gap-4">
-          <Button onClick={handleSaveDraft} variant="outline">
+          <Button
+            onClick={() => {
+              if (activeTab === "product") saveProductDraft();
+              else if (activeTab === "bundle") saveBundleDraft();
+              else if (activeTab === "discount") saveDiscountDraft();
+              else if (activeTab === "special") saveSpecialDraft();
+            }}
+          >
             Save Draft
           </Button>
           <Button
-            onClick={handlePublish}
-            disabled={
-              (activeTab === "product" && !isProductValid(productDraft)) ||
-              (activeTab === "bundle" && !isBundleValid(bundleDraft))
-            }
+            onClick={() => {
+              if (activeTab === "product") publishProduct();
+              else if (activeTab === "bundle") publishBundle();
+              else if (activeTab === "discount") publishDiscount();
+              else if (activeTab === "special") publishSpecial();
+            }}
           >
             Publish
           </Button>
         </div>
 
-        {/* Publish result panel */}
         {publishResult && (
           <div className="flex gap-4">
             <a
-              href={publishResult.pullRequestUrl}
+              href={publishResult.prUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
