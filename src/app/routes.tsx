@@ -3,6 +3,7 @@ import AddProductPage from "@/pages/admin/AddProductPage";
 import EditProductPage from "@/pages/admin/EditProductPage";
 import NewProductPage from "@/pages/products/NewProductPage";
 import NewFurniturePage from "@/pages/furniture/NewFurniturePage";
+import NewBundlePage from "@/pages/bundles/NewBundlePage";
 import Navigation from "@/components/Navigation";
 
 function HomePage() {
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
   { path: "/", element: <HomePage /> },
   { path: "/products/new", element: <NewProductPage /> },
   { path: "/furniture/new", element: <NewFurniturePage /> },
+  { path: "/bundles/new", element: <NewBundlePage /> },
   { path: "/admin/products/new", element: <AddProductPage /> },
   { path: "/admin/products/:slug/edit", element: <EditProductPage /> },
 ]);

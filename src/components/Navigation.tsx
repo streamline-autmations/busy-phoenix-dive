@@ -70,10 +70,11 @@ export default function Navigation() {
                 <span>Add Discount</span>
                 <span className="ml-auto text-xs bg-gray-100 px-2 py-1 rounded">Soon</span>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled className="flex items-center space-x-2 text-gray-400">
-                <Gift className="h-4 w-4" />
-                <span>Add Bundle Deal</span>
-                <span className="ml-auto text-xs bg-gray-100 px-2 py-1 rounded">Soon</span>
+              <DropdownMenuItem asChild className="flex items-center space-x-2">
+                <Link to="/bundles/new" className="flex items-center space-x-2 w-full">
+                  <Gift className="h-4 w-4" />
+                  <span>Add Bundle Deal</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
