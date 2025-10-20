@@ -1,17 +1,102 @@
-import React from "react";
+import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
-import BundleBuilder from "@/modules/bundles/BundleBuilder";
+import { FullProductForm, FullProductFormValue } from "@/components/FullProductForm";
+import ProductPreview from "@/components/ProductPreview";
+import { slugify } from "@/lib/slugify";
 
 export default function NewBundlePage() {
+  const [draft, setDraft] = useState<FullProductFormValue>({
+    id: "preview",
+    name: "",
+    slug: "",
+    price: 0,
+    compareAtPrice: null,
+    shortDescription: "",
+    inStock: true,
+    images: [],
+    badges: [],
+    variants: [],
+    category: "",
+    overview: "",
+    features: [],
+    howToUse: [],
+    ingredients: { inci: [], key: [] },
+    details: { size: "", shelfLife: "", claims: [] },
+    rating: 0,
+    reviewCount: 0,
+  });
+
+  function handleDraftChange(updates: Partial<FullProductFormValue>) {
+    setDraft((prev) => ({ ...prev, ...updates }));
+  }
+
+  async function handleSave() {
+    alert("Save bundle deal draft clicked");
+  }
+
+  async function handlePublish() {
+    alert("Publish bundle deal clicked");
+  }
+
+  // Ensure images array always has at least one valid URL
+  const imagesForPreview =
+    draft.images && draft.images.length > 0
+      ? draft.images.filter((url) => url && url.trim() !== "")
+      : ["/placeholder.svg"];
+
+  // Map draft to ProductCardProps (reuse for bundle preview)
+  const productCardData = {
+    id: draft.id,
+    name: draft.name || "Sample Bundle Deal Title",
+    slug: draft.slug || slugify(draft.name || "sample-bundle-deal"),
+    price: draft.price,
+    compareAtPrice: draft.compareAtPrice,
+    shortDescription: draft.shortDescription,
+    inStock: draft.inStock,
+    images: imagesForPreview,
+    badges: draft.badges,
+  };
+
+  // Map draft to NormalProductDetailPageProps (reuse for bundle preview)
+  const productDetailData = {
+    id: draft.id,
+    name: draft.name || "Sample Bundle Deal Title",
+    slug: draft.slug || slugify(draft.name || "sample-bundle-deal"),
+    category: draft.category || "Bundle Deals",
+    shortDescription: draft.shortDescription,
+    overview: draft.overview || "Detailed bundle deal overview and description here...",
+    price: draft.price,
+    compareAtPrice: draft.compareAtPrice,
+    stock: draft.inStock ? "In Stock" : "Out of Stock",
+    images: imagesForPreview,
+    features: draft.features,
+    howToUse: draft.howToUse,
+    ingredients: draft.ingredients,
+    details: draft.details,
+    variants: draft.variants,
+    rating: draft.rating,
+    reviewCount: draft.reviewCount,
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navigation />
-      <main className="container mx-auto p-6 flex flex-col lg:flex-row gap-8 flex-1">
+      <div className="container mx-auto p-6 flex flex-col lg:flex-row gap-8 flex-1">
         <div className="flex-1 max-w-full lg:max-w-lg overflow-auto">
-          <BundleBuilder />
+          <FullProductForm
+            value={draft}
+            onChange={handleDraftChange}
+            onSave={handleSave}
+            onPublish={handlePublish}
+          />
         </div>
-        {/* For preview, you can add a separate preview component if needed */}
-      </main>
+        <div className="flex-1 max-w-full overflow-auto">
+          <ProductPreview
+            productCardData={productCardData}
+            productDetailData={productDetailData}
+          />
+        </div>
+      </div>
     </div>
   );
 }
