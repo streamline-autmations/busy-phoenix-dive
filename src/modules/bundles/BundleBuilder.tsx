@@ -15,7 +15,7 @@ import Preview from "./Preview";
 import { toast } from "sonner";
 import { slugify } from "@/lib/slugify";
 import { saveDraft, publishPR, sanitizeBranchName } from "./api";
-import productsIndex from "../../content/products/index.json";
+import productsIndex from "../../../content/products/index.json";
 import type { Bundle } from "./types";
 import type { Product } from "./types";
 
@@ -103,7 +103,7 @@ export default function BundleBuilder() {
   });
 
   // Auto-generate slug from name if slug empty or matches previous slugified name
-  useEffect(() => {
+  React.useEffect(() => {
     const watchName = watch("name");
     const watchSlug = watch("slug");
     if (!watchSlug || watchSlug === slugify(watchName)) {
@@ -112,7 +112,7 @@ export default function BundleBuilder() {
   }, [watch("name"), watch("slug"), setValue]);
 
   // Auto badges: "Bundle" + "Save X%"
-  useEffect(() => {
+  React.useEffect(() => {
     const watchPrice = watch("price");
     const watchCompareAtPrice = watch("compareAtPrice");
     if (watchPrice && watchCompareAtPrice && watchCompareAtPrice > 0) {
@@ -124,7 +124,7 @@ export default function BundleBuilder() {
   }, [watch("price"), watch("compareAtPrice"), setValue]);
 
   // Calculate details fields automatically
-  useEffect(() => {
+  React.useEffect(() => {
     const watchCompareAtPrice = watch("compareAtPrice");
     const watchPrice = watch("price");
     const watchIncludedProducts = watch("includedProducts");
