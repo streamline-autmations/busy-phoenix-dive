@@ -1,11 +1,11 @@
 import React from "react";
 import { createBrowserRouter } from "react-router-dom";
-import DashboardPage from "./page";
-import ProductsPage from "./catalog/products/page";
-import NewProductPage from "./catalog/products/new/page";
-import EditProductPage from "./catalog/products/[id]/page";
-import NewFurniturePage from "./furniture/new/page";
-import NewBundlePage from "./bundles/new/page";
+import DashboardPage from "./(app)/page";
+import ProductsPage from "./(app)/catalog/products/page";
+import NewProductPage from "./(app)/catalog/products/new/page";
+import NewFurniturePage from "../pages/furniture/NewFurniturePage";
+import NewBundlePage from "../pages/bundles/NewBundlePage";
+import EditProductPage from "../pages/admin/EditProductPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <DashboardPage /> },
