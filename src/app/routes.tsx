@@ -1,27 +1,17 @@
+import React from "react";
 import { createBrowserRouter } from "react-router-dom";
-import AddProductPage from "@/pages/admin/AddProductPage";
-import EditProductPage from "@/pages/admin/EditProductPage";
-import NewProductPage from "@/pages/products/NewProductPage";
-import NewFurniturePage from "@/pages/furniture/NewFurniturePage";
-import NewBundlePage from "@/pages/bundles/NewBundlePage";
-import OwnerPortal from "@/pages/admin/OwnerPortal";
-import Navigation from "@/components/Navigation";
-
-function HomePage() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      {/* ... rest unchanged ... */}
-    </div>
-  );
-}
+import DashboardPage from "./page";
+import ProductsPage from "./catalog/products/page";
+import NewProductPage from "./catalog/products/new/page";
+import EditProductPage from "./catalog/products/[id]/page";
+import NewFurniturePage from "./furniture/new/page";
+import NewBundlePage from "./bundles/new/page";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <HomePage /> },
-  { path: "/products/new", element: <NewProductPage /> },
+  { path: "/", element: <DashboardPage /> },
+  { path: "/catalog/products", element: <ProductsPage /> },
+  { path: "/catalog/products/new", element: <NewProductPage /> },
+  { path: "/catalog/products/:id", element: <EditProductPage /> },
   { path: "/furniture/new", element: <NewFurniturePage /> },
   { path: "/bundles/new", element: <NewBundlePage /> },
-  { path: "/admin/products/new", element: <AddProductPage /> },
-  { path: "/admin/products/:slug/edit", element: <EditProductPage /> },
-  { path: "/admin/owner-portal", element: <OwnerPortal /> },
 ]);

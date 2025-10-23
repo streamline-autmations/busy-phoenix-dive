@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,9 +58,7 @@ export default function ProductsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Products</h1>
-        <Link to="/catalog/products/new">
-          <Button>New Product</Button>
-        </Link>
+        <Button onClick={() => navigate("/catalog/products/new")}>New Product</Button>
       </div>
 
       <div className="flex gap-4">
@@ -128,9 +126,7 @@ export default function ProductsPage() {
                 <td className="border border-gray-300 px-3 py-2 text-right">{p.stock_qty}</td>
                 <td className="border border-gray-300 px-3 py-2 text-right">{new Date(p.created_at).toLocaleDateString()}</td>
                 <td className="border border-gray-300 px-3 py-2 text-center">
-                  <Link to={`/catalog/products/${p.id}`}>
-                    <Button size="sm" variant="outline">Edit</Button>
-                  </Link>
+                  <Button onClick={() => navigate(`/catalog/products/${p.id}`)} size="sm" variant="outline">Edit</Button>
                 </td>
               </tr>
             ))}
